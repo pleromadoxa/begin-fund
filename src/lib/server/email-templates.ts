@@ -142,10 +142,10 @@ export function approvalEmail(
     subject: `🎉 Approved — ${BRAND} funding for ${businessName}`,
     html: layout({
       preheader: "Your B.E.G.I.N funding application has been approved.",
-      heading: `Congratulations, ${firstName} — you are approved!`,
+      heading: `Congratulations, ${esc(firstName)} — you are approved!`,
       body:
-        p(`Great news! The Review Committee has approved your ${BRAND} application for <strong>${businessName}</strong>.`) +
-        p(`${tierLine}${amountLine}<br/>Reference: <strong>${reference}</strong>`) +
+        p(`Great news! The Review Committee has approved your ${BRAND} application for <strong>${esc(businessName)}</strong>.`) +
+        p(`${tierLine}${amountLine}<br/>Reference: <strong>${esc(reference)}</strong>`) +
         p(`This is interest-free capital — 0% interest, up to 6 months, principal only — committed to helping you grow and take the Kingdom to the next level. Sign in to your dashboard for the full details and the next steps from the Ministry of Commerce.`),
       button: { label: "View your dashboard", href: dash },
       footerNote: `Disbursement details will follow on your dashboard. Congratulations once again from all of us at the Ministry of Commerce.`,
@@ -166,9 +166,9 @@ export function rejectionEmail(
     subject: `An update on your ${BRAND} application`,
     html: layout({
       preheader: "An update from the Review Committee.",
-      heading: `An update on your application, ${firstName}`,
+      heading: `An update on your application, ${esc(firstName)}`,
       body:
-        p(`Thank you sincerely for applying to the ${BRAND} fund for <strong>${businessName}</strong> (reference <strong>${reference}</strong>).`) +
+        p(`Thank you sincerely for applying to the ${BRAND} fund for <strong>${esc(businessName)}</strong> (reference <strong>${esc(reference)}</strong>).`) +
         p(`After prayerful review, the Committee was not able to approve this application for funding at this time. This is not a reflection of the value of your business — Kingdom enterprise is honoured, and we encourage you to grow, refine and apply again in a future cycle.`) +
         p(`Your dashboard remains open, and the Ministry of Commerce is cheering you on.`),
       button: { label: "Open your dashboard", href: dash },
@@ -190,10 +190,10 @@ export function moreInfoEmail(
     subject: `Action needed — a quick question about your ${BRAND} application`,
     html: layout({
       preheader: "The Review Committee needs a little more information.",
-      heading: `A quick question about your application, ${firstName}`,
+      heading: `A quick question about your application, ${esc(firstName)}`,
       body:
-        p(`The Review Committee is studying your application for <strong>${businessName}</strong> (reference <strong>${reference}</strong>) and needs one more detail before decisions are finalised.`) +
-        p(`<strong>What they asked for:</strong><br/><em>${request}</em>`) +
+        p(`The Review Committee is studying your application for <strong>${esc(businessName)}</strong> (reference <strong>${esc(reference)}</strong>) and needs one more detail before decisions are finalised.`) +
+        p(`<strong>What they asked for:</strong><br/><em>${esc(request)}</em>`) +
         p(`Sign in to your dashboard to respond — the Committee reads every reply personally.`),
       button: { label: "Go to my dashboard", href: dash },
     }),

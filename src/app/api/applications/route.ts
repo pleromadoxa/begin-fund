@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { getCurrentUser } from "@/lib/server/session";
 import { getStore } from "@/lib/server/store";
 import { storeGuard } from "@/lib/server/api-guard";
-import { clientIp, rateLimit, tooManyRequests } from "@/lib/server/rate-limit";
+import { rateLimit, tooManyRequests } from "@/lib/server/rate-limit";
 import type { Application, ApplicationStatus, TimelineEvent, Tier } from "@/lib/types";
 
 function makeReference(): string {

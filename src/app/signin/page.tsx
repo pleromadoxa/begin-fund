@@ -6,6 +6,7 @@ import { Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { Alert, AuthShell, Field } from "@/components/auth-shell";
+import { safeNextPath } from "@/lib/safe-next";
 
 function SignInForm() {
   const router = useRouter();
@@ -31,7 +32,7 @@ function SignInForm() {
         setLoading(false);
         return;
       }
-      router.push(params.get("next") || "/dashboard");
+      router.push(safeNextPath(params.get("next")));
       router.refresh();
     } catch {
       setError("Network error. Please check your connection and try again.");
