@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken } from "@/lib/server/crypto";
 import { clientIp, rateLimit } from "@/lib/server/rate-limit";
+import { publicOrigin } from "@/lib/server/public-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -43,8 +44,7 @@ export async function POST(request: NextRequest) {
   const b = Buffer.from(passphrase, "utf8");
   const ok = passphrase.length > 0 && a.length === b.length && a.every((byte, i) => byte === b[i]);
 
-  const base = request.nextUrl.clone();
-  base.pathname = "/admin";
+  const base = new URL("/admin", publicOrigin(request));
   base.search = ok ? "" : "?error=1";
 
   const res = NextResponse.redirect(base, 303);
