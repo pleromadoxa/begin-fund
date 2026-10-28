@@ -1,125 +1,32 @@
-"use client";
-
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
-import { Alert, AuthShell, Field } from "@/components/auth-shell";
+import { ArrowRight, Lock } from "lucide-react";
 
-function SignInForm() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+export const metadata = {
+  title: "Sign In — B.E.G.I.N Preview",
+  description: "The live B.E.G.I.N platform sign-in.",
+};
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Unable to sign in. Please try again.");
-        setLoading(false);
-        return;
-      }
-      router.push(params.get("next") || "/dashboard");
-      router.refresh();
-    } catch {
-      setError("Network error. Please check your connection and try again.");
-      setLoading(false);
-    }
-  }
-
-  return (
-    <form onSubmit={submit} noValidate>
-      {error && <Alert kind="error">{error}</Alert>}
-
-      <Field label="Email address" required>
-        <div className="relative">
-          <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-          <input
-            type="email"
-            className="field pl-10"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-            required
-          />
-        </div>
-      </Field>
-
-      <Field label="Password" required>
-        <div className="relative">
-          <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-          <input
-            type="password"
-            className="field pl-10"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            autoComplete="current-password"
-            required
-          />
-        </div>
-      </Field>
-
-      <motion.button
-        type="submit"
-        disabled={loading}
-        whileTap={{ scale: 0.985 }}
-        className="btn-emerald mt-6 w-full rounded-full py-4 text-sm font-bold tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-60"
-      >
-        {loading ? (
-          <>
-            <Loader2 size={16} className="animate-spin" /> Signing you in…
-          </>
-        ) : (
-          <>
-            Sign in to dashboard <ArrowRight size={16} />
-          </>
-        )}
-      </motion.button>
-
-      <p className="mt-6 text-center text-sm text-muted">
-        New to B.E.G.I.N?{" "}
-        <Link
-          href={`/signup${params.get("next") ? `?next=${params.get("next")}` : ""}`}
-          className="text-emerald-800 font-semibold hover:text-gold transition"
-        >
-          Create an account
-        </Link>
-      </p>
-    </form>
-  );
-}
-
+/**
+ * Static-preview notice — authentication runs on the full SSR deployment.
+ */
 export default function SignInPage() {
   return (
-    <AuthShell
-      title="Welcome back"
-      subtitle="Sign in to check your application status, respond to requests and manage your profile."
-      footer={
-        <>
-          Powered by the Ministry of Commerce, Loveworld Kingdom ·{" "}
-          <Link href="/" className="hover:text-emerald-800 transition">
-            b.e.g.i.n home
-          </Link>
-        </>
-      }
-    >
-      <Suspense>
-        <SignInForm />
-      </Suspense>
-    </AuthShell>
+    <main className="dark-mesh grain flex min-h-[100svh] items-center justify-center px-6 py-24">
+      <div className="max-w-md text-center">
+        <Lock className="mx-auto h-8 w-8 text-gold" />
+        <p className="eyebrow mt-6">B.E.G.I.N — Preview</p>
+        <h1 className="font-display mt-3 text-4xl text-ivory">
+          Sign in lives on the <span className="gold-text italic">full platform</span>
+        </h1>
+        <p className="mt-4 text-sm leading-relaxed text-ivory/60">
+          Accounts, applications and dashboards run on the live SSR deployment of
+          B.E.G.I.N. This preview showcases the public face of the fund — the
+          story, the tiers and the LTIF gallery.
+        </p>
+        <Link href="/" className="btn-primary mt-8 inline-flex items-center gap-2">
+          Back to the home page <ArrowRight size={15} />
+        </Link>
+      </div>
+    </main>
   );
 }
