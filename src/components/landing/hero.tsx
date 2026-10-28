@@ -9,7 +9,7 @@ import { Counter, EASE, useMouseTilt } from "../motion";
 const HERO_IMAGES = [
   { src: "/images/SUN91044.jpg", pos: "top-[2%] left-[4%] w-[52%] rotate-[-5deg]", delay: 0.35 },
   { src: "/images/SUN90287.jpg", pos: "top-[26%] right-[0%] w-[56%] rotate-[4deg]", delay: 0.5 },
-  { src: "/images/SUN90941.jpg", pos: "bottom-[4%] left-[16%] w-[50%] rotate-[2.5deg]", delay: 0.65 },
+  { src: "/images/SUN90226.jpg", pos: "bottom-[4%] left-[16%] w-[50%] rotate-[2.5deg]", delay: 0.65 },
 ];
 
 export function Hero() {

@@ -87,15 +87,15 @@ export const GALLERY: GalleryItem[] = [
     src: "/images/SUN90331.jpg",
     title: "Lifting the Whole Room",
     caption:
-      "One of the esteemed speakers Pastor Chris sent lifts the forum in ministration from the B.E.G.I.N podium.",
+      "The Highly Esteemed Regional Pastor, Pastor Biodun Lawal, lifts the forum in ministration from the B.E.G.I.N podium.",
     tag: "Keynote",
     tall: true,
   },
   {
     src: "/images/SUN90332.jpg",
-    title: "An Esteemed Voice from Pastor Chris",
+    title: "The Esteemed Pastor Biodun Lawal",
     caption:
-      "One of the honoured ministers sent by Pastor Chris takes the B.E.G.I.N podium to minister to the people of Ghana.",
+      "The Highly Esteemed Regional Pastor, Pastor Biodun Lawal, takes the B.E.G.I.N podium to minister to the people of Ghana.",
     tag: "Keynote",
   },
   {
