@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Local data store
 .data/
+
+# standalone build artifact (never commit the generated server)
+/server.js
