@@ -21,7 +21,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-[100svh] flex flex-col bg-cream">
-      <Header forceDark={false} />
+      <Header light />
       <div className="flex-1 pt-[110px] pb-20">
         <DashboardClient
           user={{

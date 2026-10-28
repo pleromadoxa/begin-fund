@@ -30,7 +30,7 @@ export function Reveal({
       className={className}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, margin: "-80px" }}
+      viewport={{ once, margin: "0px" }}
       transition={{ duration: 0.85, delay, ease: EASE }}
     >
       {children}
@@ -52,7 +52,7 @@ export function Stagger({
       className={className}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ once: true, margin: "0px" }}
       variants={{ hidden: {}, show: { transition: { staggerChildren: gap } } }}
     >
       {children}
@@ -81,7 +81,7 @@ export function Counter({
   className?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const inView = useInView(ref, { once: true, margin: "0px" });
   const [value, setValue] = useState(0);
 
   useEffect(() => {

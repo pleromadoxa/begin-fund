@@ -16,7 +16,7 @@ const NAV = [
   { href: "/#process", label: "How It Works" },
 ];
 
-export function Header({ forceDark = false }: { forceDark?: boolean }) {
+export function Header({ light = false }: { light?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<SafeUser | null>(null);
@@ -41,8 +41,13 @@ export function Header({ forceDark = false }: { forceDark?: boolean }) {
     };
   }, [pathname]);
 
-  const dark = forceDark || !scrolled;
   const solid = scrolled || open;
+  // True when the header sits over a light (cream/ivory) surface: either a
+  // light page (light prop) or the solid ivory bar after scrolling/opening.
+  // Light surfaces get the emerald wordmark + ink text; dark hero surfaces
+  // get the ivory wordmark + ivory text. This keeps everything legible at
+  // the very top of the page without requiring a scroll.
+  const onLight = light || solid;
 
   async function signOut() {
     await fetch("/api/auth/signout", { method: "POST" });
@@ -66,7 +71,7 @@ export function Header({ forceDark = false }: { forceDark?: boolean }) {
       >
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="flex items-center justify-between h-[76px]">
-            <Wordmark size="sm" dark={dark && !solid ? true : solid ? false : true} />
+            <Wordmark size="sm" dark={!onLight} />
 
             <nav className="hidden lg:flex items-center gap-8">
               {NAV.map((n) => (
@@ -74,7 +79,7 @@ export function Header({ forceDark = false }: { forceDark?: boolean }) {
                   key={n.href}
                   href={n.href}
                   className={`relative text-[0.82rem] font-medium tracking-wide transition-colors ${
-                    solid
+                    onLight
                       ? "text-ink/75 hover:text-emerald-800"
                       : "text-ivory/85 hover:text-gold-light"
                   }`}
@@ -95,7 +100,7 @@ export function Header({ forceDark = false }: { forceDark?: boolean }) {
                   <button
                     onClick={signOut}
                     className={`text-sm font-medium flex items-center gap-1.5 px-3 py-2 rounded-full transition-colors ${
-                      solid ? "text-muted hover:text-emerald-800" : "text-ivory/75 hover:text-gold-light"
+                      onLight ? "text-muted hover:text-emerald-800" : "text-ivory/75 hover:text-gold-light"
                     }`}
                   >
                     <LogOut size={14} /> Sign out
@@ -106,7 +111,7 @@ export function Header({ forceDark = false }: { forceDark?: boolean }) {
                   <Link
                     href="/signin"
                     className={`text-sm font-semibold px-4 py-2.5 rounded-full transition-colors ${
-                      solid
+                      onLight
                         ? "text-emerald-800 hover:bg-emerald-800/8"
                         : "text-ivory hover:text-gold-light"
                     }`}
@@ -127,7 +132,7 @@ export function Header({ forceDark = false }: { forceDark?: boolean }) {
               onClick={() => setOpen((o) => !o)}
               aria-label="Toggle menu"
               className={`lg:hidden p-2 rounded-full border ${
-                solid ? "border-gold/30 text-emerald-900" : "border-ivory/30 text-ivory"
+                onLight ? "border-gold/30 text-emerald-900" : "border-ivory/30 text-ivory"
               }`}
             >
               {open ? <X size={20} /> : <Menu size={20} />}

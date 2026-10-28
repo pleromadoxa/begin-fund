@@ -20,7 +20,7 @@ export default async function ApplyPage() {
 
   return (
     <main className="min-h-[100svh] bg-cream">
-      <Header forceDark={false} />
+      <Header light />
       <div className="pt-[110px] pb-24">
         <ApplyWizard
           user={{
