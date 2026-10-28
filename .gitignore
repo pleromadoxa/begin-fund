@@ -45,3 +45,6 @@ next-env.d.ts
 
 # standalone build artifact (never commit the generated server)
 /server.js
+
+# stash used by scripts/static-export.mjs while building out/
+/.static-export-stash/
