@@ -47,9 +47,11 @@ const STATUS_ICON: Record<ApplicationStatus, React.ComponentType<{ size?: number
 export function DashboardClient({
   user,
   application,
+  justSubmitted = false,
 }: {
   user: SafeUser;
   application: Application | null;
+  justSubmitted?: boolean;
 }) {
   const status: ApplicationStatus = application?.status ?? "draft";
   const color = STATUS_COLORS[status];
@@ -70,6 +72,25 @@ export function DashboardClient({
 
   return (
     <div className="mx-auto max-w-7xl px-5 sm:px-8">
+      {/* Post-submission confirmation */}
+      {justSubmitted && (
+        <Reveal>
+          <div className="mb-8 rounded-2xl border border-emerald-300/60 bg-emerald-50/70 p-5 sm:p-6 flex items-start gap-4">
+            <CheckCircle2 size={22} className="text-emerald-800 shrink-0 mt-0.5" />
+            <div>
+              <h2 className="font-[family-name:var(--font-display)] text-lg text-emerald-900">
+                Application submitted — thank you!
+              </h2>
+              <p className="mt-1 text-sm text-emerald-900/80 leading-relaxed">
+                Your application is now with the Review Committee. You will be contacted on your
+                registered phone or email if anything else is needed — and every decision will
+                appear right here on your dashboard.
+              </p>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
       {/* Greeting */}
       <Reveal>
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">

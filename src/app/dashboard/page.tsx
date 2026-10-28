@@ -13,10 +13,15 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ submitted?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/signin?next=/dashboard");
 
+  const { submitted } = await searchParams;
   const application = await getStore().getApplicationByUser(user.id);
 
   return (
@@ -33,6 +38,7 @@ export default async function DashboardPage() {
             createdAt: user.createdAt,
           }}
           application={application}
+          justSubmitted={submitted === "1"}
         />
       </div>
       <Footer />

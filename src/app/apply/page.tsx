@@ -12,10 +12,15 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function ApplyPage() {
+export default async function ApplyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ review?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/signin?next=/apply");
 
+  const { review } = await searchParams;
   const application = await getStore().getApplicationByUser(user.id);
 
   return (
@@ -30,6 +35,7 @@ export default async function ApplyPage() {
             businessName: user.businessName,
           }}
           application={application}
+          reviewMode={review === "1"}
         />
       </div>
     </main>

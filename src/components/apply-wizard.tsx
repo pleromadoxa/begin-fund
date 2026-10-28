@@ -49,18 +49,28 @@ function formFromApplication(
 export function ApplyWizard({
   user,
   application,
+  reviewMode = false,
 }: {
   user: Omit<SafeUser, "id" | "createdAt">;
   application: Application | null;
+  reviewMode?: boolean;
 }) {
   const router = useRouter();
   const submitted = application?.status !== undefined && application.status !== "draft";
+  const resubmitting = application?.status === "more_info_required";
   const [form, setForm] = useState<ApplyForm>(() => formFromApplication(user, application));
-  const [step, setStep] = useState(0);
+  // "View application"/"Respond now" land on the declaration & summary step.
+  const [step, setStep] = useState(() => (reviewMode ? 4 : 0));
   const [errors, setErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(
+    reviewMode
+      ? resubmitting
+        ? "The committee has requested more information — review your answers below, adjust anything needed, then resubmit."
+        : "You are reviewing your submitted application."
+      : null,
+  );
 
   const set: FormSetter = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
