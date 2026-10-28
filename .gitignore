@@ -49,5 +49,11 @@ next-env.d.ts
 # stash used by scripts/static-export.mjs while building out/
 /.static-export-stash/
 
+# OpenNext Cloudflare build output
+/.open-next/
+
+# wrangler local state
+/.wrangler/
+
 # QA screenshots (local only)
 .qa-shots/
