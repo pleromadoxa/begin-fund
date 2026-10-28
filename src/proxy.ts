@@ -19,7 +19,9 @@ async function sessionValid(token: string | undefined): Promise<boolean> {
 
   const secret = process.env.SESSION_SECRET?.trim();
   const devPlaceholder =
-    !secret || secret === "begin-dev-secret-change-me-in-production-9d4f2a";
+    !secret ||
+    secret === "begin-dev-secret-change-me-in-production-9d4f2a" ||
+    secret === "begin-change-me-to-a-long-random-string";
   // Dev convenience: with no configured secret, accept any well-formed token
   // (the server layer still resolves the user). Production always verifies.
   if (devPlaceholder) return process.env.NODE_ENV !== "production";

@@ -48,3 +48,6 @@ next-env.d.ts
 
 # stash used by scripts/static-export.mjs while building out/
 /.static-export-stash/
+
+# QA screenshots (local only)
+.qa-shots/

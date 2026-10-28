@@ -3,6 +3,14 @@ import { createHmac, randomBytes, scrypt, timingSafeEqual } from "crypto";
 const DEV_FALLBACK_SECRET = "begin-dev-secret-change-me-in-production-9d4f2a";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 
+/** Every publicly known placeholder — none may ever sign production sessions. */
+const KNOWN_PLACEHOLDERS = new Set([
+  DEV_FALLBACK_SECRET,
+  "begin-change-me-to-a-long-random-string",
+  "changeme",
+  "secret",
+]);
+
 /**
  * Fail closed in production: without a real secret anyone could mint a valid
  * session cookie for any user (including "admin"), so we refuse to sign or
@@ -11,7 +19,7 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
  */
 function sessionSecret(): string {
   const secret = process.env.SESSION_SECRET?.trim();
-  if (secret && secret !== DEV_FALLBACK_SECRET) return secret;
+  if (secret && !KNOWN_PLACEHOLDERS.has(secret)) return secret;
   if (process.env.NODE_ENV === "production") {
     throw new Error(
       "SESSION_SECRET is not set. Generate one (e.g. `openssl rand -hex 32`) and set it " +
