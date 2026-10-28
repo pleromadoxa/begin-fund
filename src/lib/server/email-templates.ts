@@ -82,15 +82,17 @@ export interface EmailContent {
 /** Sent the moment an applicant creates an account. */
 export function welcomeEmail(name: string, businessName: string): EmailContent {
   const firstName = name.split(" ")[0] || "friend";
+  const hFirst = esc(firstName);
+  const hBusiness = esc(businessName);
   const dash = `${APP_URL()}/dashboard`;
   const apply = `${APP_URL()}/apply`;
   return {
     subject: `Welcome to ${BRAND}, ${firstName} — your business just took a step of faith`,
     html: layout({
       preheader: "Thank you for taking a step to grow your business and lift the Kingdom.",
-      heading: `Welcome to ${BRAND}, ${firstName}!`,
+      heading: `Welcome to ${BRAND}, ${hFirst}!`,
       body:
-        p(`Thank you for taking a step to grow your business and take the Kingdom to the next level. Your account for <strong>${businessName}</strong> is now live.`) +
+        p(`Thank you for taking a step to grow your business and take the Kingdom to the next level. Your account for <strong>${hBusiness}</strong> is now live.`) +
         p(`The Business Expansion and Growth Initiative is a <strong>$1,000,000 interest-free fund</strong> set in motion at the Loveworld Trade &amp; Investment Forum for brethren across Ghana — and it was set in motion for businesses like yours.`) +
         p(`<strong>What happens next:</strong><br/>1. Complete your funding application — it takes about 10 minutes.<br/>2. The Review Committee studies every application personally.<br/>3. Track your progress in real time from your dashboard.`),
       button: { label: "Start your application", href: apply },
@@ -110,7 +112,7 @@ export function passwordResetEmail(name: string, token: string): EmailContent {
       preheader: "A secure link to reset your password — valid for 60 minutes.",
       heading: `Password reset requested`,
       body:
-        p(`Hello ${firstName}, we received a request to reset the password for your ${BRAND} account.`) +
+        p(`Hello ${esc(firstName)}, we received a request to reset the password for your ${BRAND} account.`) +
         p(`Tap the button below to choose a new password. This secure link expires in <strong>60 minutes</strong> and can be used once.`) +
         p(`If you did not request this, you can safely ignore this email — your account stays protected.`),
       button: { label: "Reset my password", href: resetUrl },
