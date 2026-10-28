@@ -12,9 +12,10 @@ const nextConfig: NextConfig = {
   // The dashboard + application pages are auth-driven (cookie reads on every
   // request), so route-level caching is disabled in favour of dynamic rendering.
   cacheComponents: false,
-  // headers() only apply to the SSR runtime — a static export cannot serve them.
+  // headers() only apply to the SSR runtime — a static export cannot serve them,
+  // and the /_next/image optimizer does not exist on static hosts either.
   ...(staticExport
-    ? {}
+    ? { images: { unoptimized: true } }
     : {
         async headers() {
           return [
