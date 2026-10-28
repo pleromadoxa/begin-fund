@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "@types/nodemailer": "^8.0.2",
     "framer-motion": "^14.7.1",
