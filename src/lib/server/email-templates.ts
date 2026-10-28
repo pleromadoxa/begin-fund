@@ -11,7 +11,20 @@ const SIGNOFF = "Ministry of Commerce, Loveworld Kingdom";
 const YEAR = new Date().getFullYear();
 
 const APP_URL = () =>
-  process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  (
+    process.env.APP_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000"
+  ).replace(/\/+$/, "");
+
+/** Escapes user-controlled text before it enters email HTML. */
+const esc = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 interface LayoutOptions {
   preheader: string;

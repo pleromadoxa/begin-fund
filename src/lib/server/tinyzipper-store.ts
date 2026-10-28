@@ -1,3 +1,4 @@
+import { createHash, randomBytes, randomUUID } from "crypto";
 import type { Application, Tier, User } from "../types";
 
 /**
@@ -7,15 +8,19 @@ import type { Application, Tier, User } from "../types";
  *   CELLAR_REST_URL   <- PostgREST-shaped REST surface of the cellar
  *   CELLAR_SEAL       <- service capability seal (zc_…) — SERVER ONLY
  *
- * The two B.E.G.I.N chambers (`users`, `applications`) were created on the
- * `realtym` cellar via the sealed-SQL hatch (POST /query):
+ * The B.E.G.I.N chambers (`users`, `applications`, `password_resets`) are
+ * created on the cellar via the sealed-SQL hatch (POST /query):
  *
  *   CREATE TABLE users (id text PRIMARY KEY, full_name text, email text NOT NULL,
- *     phone text, business_name text, password_hash text NOT NULL, created_at timestamptz);
+ *     phone text, business_name text, password_hash text NOT NULL,
+ *     created_at timestamptz, session_epoch timestamptz);
  *   CREATE TABLE applications (id text PRIMARY KEY, user_id text NOT NULL, status text,
  *     tier int, reference text, amount_requested numeric, loan_purpose text,
  *     business_name text, submitted_at timestamptz, updated_at timestamptz,
  *     review_note text, timeline jsonb, data jsonb);
+ *   CREATE TABLE password_resets (id text PRIMARY KEY, user_id text NOT NULL,
+ *     token_hash text NOT NULL, expires_at timestamptz NOT NULL,
+ *     used boolean NOT NULL DEFAULT false, created_at timestamptz NOT NULL);
  *
  * Reliability contract (from the Cellar docs):
  *   - every request runs under a 7.5s server budget and answers a structured
@@ -144,6 +149,7 @@ function rowToUser(row: Record<string, unknown>): User {
     businessName: String(row.business_name ?? ""),
     passwordHash: String(row.password_hash ?? ""),
     createdAt: String(row.created_at ?? new Date().toISOString()),
+    sessionEpoch: row.session_epoch ? Date.parse(String(row.session_epoch)) || 0 : 0,
   };
 }
 
@@ -165,49 +171,8 @@ function rowToApp(row: Record<string, unknown>): Application {
   };
 }
 
-/**
- * Mint a per-user scoped seal (POST /session). The scope is subset-validated
- * against this seal's tables/ops — escalation is refused.
- *
- * The B.E.G.I.N web app keeps ALL Cellar access server-side (this seal never
- * reaches a browser), so this helper is for future direct-client features —
- * e.g. handing a short-TTL seal to an EventSource on /live. Least tables,
- * least ops, shortest TTL that fits the feature.
- */
-export async function mintScopedSeal(options: {
-  userId: string;
-  tables: string[];
-  ops: ("select" | "insert" | "update" | "delete")[];
-  ttlSeconds: number;
-}): Promise<{ seal: string; expiresAt?: string }> {
-  const cellarUrl = (process.env.CELLAR_URL || "").replace(/\/+$/, "");
-  const res = await fetch(`${cellarUrl}/session`, {
-    method: "POST",
-    headers: HEADERS(),
-    body: JSON.stringify({
-      user_id: options.userId,
-      tables: options.tables,
-      ops: options.ops,
-      ttl_seconds: options.ttlSeconds,
-    }),
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new CellarError(
-      `POST /session failed with ${res.status}`,
-      res.status,
-      text,
-    );
-  }
-  const data = (await res.json()) as Record<string, unknown>;
-  return {
-    seal: String(data.access_token ?? data.seal ?? data.token ?? ""),
-    expiresAt: data.expires_in
-      ? new Date(Date.now() + Number(data.expires_in) * 1000).toISOString()
-      : undefined,
-  };
-}
+const hashResetToken = (token: string) =>
+  createHash("sha256").update(token).digest("hex");
 
 export class TinyZipperStore {
   async createUser(user: User): Promise<User> {
@@ -222,6 +187,7 @@ export class TinyZipperStore {
         business_name: user.businessName,
         password_hash: user.passwordHash,
         created_at: user.createdAt,
+        session_epoch: user.sessionEpoch ? new Date(user.sessionEpoch).toISOString() : null,
       }),
     });
     const created = await rows(res);
@@ -245,6 +211,20 @@ export class TinyZipperStore {
     return list[0] ? rowToUser(list[0]) : null;
   }
 
+  /** Batch lookup — chunked `id=in.(…)` instead of one request per user. */
+  async findUsersByIds(ids: string[]): Promise<User[]> {
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (!unique.length) return [];
+    const out: User[] = [];
+    const CHUNK = 40;
+    for (let i = 0; i < unique.length; i += CHUNK) {
+      const chunk = unique.slice(i, i + CHUNK).map(encodeURIComponent);
+      const res = await cellar(`/users?id=in.(${chunk.join(",")})`);
+      out.push(...(await rows(res)).map(rowToUser));
+    }
+    return out;
+  }
+
   async updateUser(id: string, patch: Partial<User>): Promise<User | null> {
     const body: Record<string, unknown> = {};
     if (patch.fullName !== undefined) body.full_name = patch.fullName;
@@ -252,6 +232,10 @@ export class TinyZipperStore {
     if (patch.phone !== undefined) body.phone = patch.phone;
     if (patch.businessName !== undefined) body.business_name = patch.businessName;
     if (patch.passwordHash !== undefined) body.password_hash = patch.passwordHash;
+    if (patch.sessionEpoch !== undefined)
+      body.session_epoch = patch.sessionEpoch
+        ? new Date(patch.sessionEpoch).toISOString()
+        : null;
     const res = await cellar(`/users?id=eq.${id}`, {
       method: "PATCH",
       headers: { Prefer: "return=representation" },
@@ -299,6 +283,21 @@ export class TinyZipperStore {
     return list[0] ? rowToApp(list[0]) : null;
   }
 
+  async getApplicationById(id: string): Promise<Application | null> {
+    const res = await cellar(
+      `/applications?id=eq.${encodeURIComponent(id)}&limit=1`,
+    );
+    const list = await rows(res);
+    return list[0] ? rowToApp(list[0]) : null;
+  }
+
+  async referenceExists(reference: string): Promise<boolean> {
+    const res = await cellar(
+      `/applications?reference=eq.${encodeURIComponent(reference)}&limit=1`,
+    );
+    return (await rows(res)).length > 0;
+  }
+
   async updateApplication(
     userId: string,
     patch: Partial<Application>,
@@ -341,5 +340,49 @@ export class TinyZipperStore {
     });
     const updated = await rows(res);
     return updated[0] ? rowToApp(updated[0]) : null;
+  }
+
+  /** Issues a fresh reset token for a user; returns the raw token. */
+  async createResetToken(userId: string): Promise<string> {
+    const token = randomBytes(32).toString("hex");
+    const res = await cellar("/password_resets", {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({
+        id: `rst_${randomUUID()}`,
+        user_id: userId,
+        token_hash: hashResetToken(token),
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        used: false,
+        created_at: new Date().toISOString(),
+      }),
+    });
+    const inserted = await rows(res);
+    if (!inserted.length) {
+      throw new CellarError("password_resets insert returned no row", 500, null);
+    }
+    return token;
+  }
+
+  /**
+   * Atomically consumes a reset token: a single conditional UPDATE that only
+   * flips `used` when the row is still unused and unexpired. The returned
+   * representation decides the winner if two redemptions race.
+   */
+  async consumeResetToken(token: string): Promise<string | null> {
+    const nowIso = new Date().toISOString();
+    const res = await fetch(
+      `${REST_BASE()}/password_resets?token_hash=eq.${hashResetToken(token)}` +
+        `&used=eq.false&expires_at=gt.${encodeURIComponent(nowIso)}`,
+      {
+        method: "PATCH",
+        headers: { ...HEADERS(), Prefer: "return=representation" },
+        body: JSON.stringify({ used: true }),
+        cache: "no-store",
+      },
+    );
+    if (!res.ok) return null;
+    const list = await rows<{ user_id?: unknown }>(res);
+    return list[0]?.user_id ? String(list[0].user_id) : null;
   }
 }

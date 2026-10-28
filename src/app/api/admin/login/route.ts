@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken } from "@/lib/server/crypto";
+import { clientIp, rateLimit } from "@/lib/server/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,15 @@ function committeePassphrase(): string {
 }
 
 export async function POST(request: NextRequest) {
+  // Brute-force protection on the single shared passphrase:
+  // 5 attempts per IP every 5 minutes.
+  if (!rateLimit(`admin-login:${clientIp(request)}`, 5, 5 * 60_000)) {
+    return NextResponse.json(
+      { error: "Too many attempts — please wait a moment and try again." },
+      { status: 429, headers: { "Retry-After": "300" } },
+    );
+  }
+
   const passphrase = committeePassphrase();
   const form = await request.formData();
   const password = String(form.get("password") ?? "");

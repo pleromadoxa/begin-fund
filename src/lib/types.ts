@@ -16,6 +16,11 @@ export interface User {
   businessName: string;
   passwordHash: string;
   createdAt: string;
+  /**
+   * Session revocation epoch (ms). Bumped on password reset; any session
+   * token carrying an older epoch stops verifying immediately.
+   */
+  sessionEpoch?: number;
 }
 
 export type SafeUser = Omit<User, "passwordHash">;

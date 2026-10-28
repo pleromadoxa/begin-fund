@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getStore } from "@/lib/server/store";
 import { storeGuard } from "@/lib/server/api-guard";
+import { CellarError } from "@/lib/server/tinyzipper-store";
 import { hashPassword } from "@/lib/server/crypto";
 import { setSessionCookie, toSafeUser } from "@/lib/server/session";
 import { sendMail } from "@/lib/server/mail";
 import { welcomeEmail } from "@/lib/server/email-templates";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/server/rate-limit";
 
 const ghanaPhone = /^(\+233|0)\d{9}$/;
 
@@ -18,6 +20,9 @@ async function post(req: NextRequest) {
   const phone = String(body.phone ?? "").trim().replace(/[\s-]/g, "");
   const businessName = String(body.businessName ?? "").trim();
   const password = String(body.password ?? "");
+
+  // Signup is expensive (scrypt + welcome email) — tight limit per IP.
+  if (!rateLimit(`signup:${clientIp(req)}`, 5, 15 * 60_000)) return tooManyRequests(900);
 
   if (!fullName || fullName.length < 3)
     return NextResponse.json({ error: "Please enter your full name." }, { status: 400 });
@@ -43,17 +48,33 @@ async function post(req: NextRequest) {
       { status: 409 },
     );
 
-  const user = await store.createUser({
-    id: `usr_${randomUUID()}`,
-    fullName,
-    email,
-    phone,
-    businessName,
-    passwordHash: hashPassword(password),
-    createdAt: new Date().toISOString(),
-  });
+  let user;
+  try {
+    user = await store.createUser({
+      id: `usr_${randomUUID()}`,
+      fullName,
+      email,
+      phone,
+      businessName,
+      passwordHash: await hashPassword(password),
+      createdAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    // Concurrent duplicate signup: the loser surfaces as a constraint
+    // violation — answer with the same friendly 409, not a 500.
+    const conflict =
+      error instanceof CellarError &&
+      (error.status === 409 || (error.body as { code?: string } | null)?.code === "23505");
+    if (conflict) {
+      return NextResponse.json(
+        { error: "An account with this email already exists. Try signing in." },
+        { status: 409 },
+      );
+    }
+    throw error;
+  }
 
-  await setSessionCookie(user.id);
+  await setSessionCookie(user.id, user.sessionEpoch ?? 0);
 
   // Welcome email (Zipper Mail) — non-fatal if delivery fails.
   const mail = await sendMail({

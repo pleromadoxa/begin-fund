@@ -5,8 +5,9 @@ import type { AdminRow } from "@/lib/admin-types";
 export async function getAdminRows(): Promise<AdminRow[]> {
   const store = getStore();
   const apps = await store.listApplications();
-  const users = await Promise.all(apps.map((a) => store.findUserById(a.userId)));
-  const byId = new Map(users.filter(Boolean).map((u) => [u!.id, u!]));
+  // One batched lookup for all applicants — not one query per application.
+  const users = await store.findUsersByIds(apps.map((a) => a.userId));
+  const byId = new Map(users.map((u) => [u.id, u]));
 
   return apps.map((app) => ({
     id: app.id,

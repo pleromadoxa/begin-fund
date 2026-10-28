@@ -49,13 +49,19 @@ async function patch(request: NextRequest) {
   }
 
   const store = getStore();
-  const app = (await store.listApplications()).find((a) => a.id === id);
+  const app = await store.getApplicationById(id);
   if (!app) return NextResponse.json({ error: "Application not found" }, { status: 404 });
 
   const updated = await store.adminUpdateApplication(id, {
     status,
+    // Keep the existing note unless the committee writes a new one — a
+    // decision must not wipe the record of what was previously asked.
     reviewNote:
-      status === "more_info_required" ? note || "Additional information required" : "",
+      status === "more_info_required"
+        ? note || "Additional information required"
+        : note?.trim()
+          ? note.trim()
+          : app.reviewNote ?? "",
     timeline: [
       ...app.timeline,
       {
